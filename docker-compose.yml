@@ -1,0 +1,98 @@
+version: "3.5"
+services:
+  postgresql:
+    container_name: postgresql
+    environment:
+      POSTGRES_PASSWORD: postgresql
+      POSTGRES_USER: postgresql
+    image: postgres:${POSTGRESQL_VERSION}
+    networks:
+      - lemonade-network
+    ports:
+      - 5432:5432
+    volumes:
+      - /var/lib/postgresql/data
+
+  temporal:
+    container_name: temporal
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=postgresql
+      - POSTGRES_PWD=postgresql
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    networks:
+      - lemonade-network
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+    labels:
+      kompose.volume.type: configMap
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "tctl",
+          "--address",
+          "temporal:7233",
+          "workflow",
+          "list"
+        ]
+      interval: 10s
+      timeout: 1m
+      retries: 10
+
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+    networks:
+      - lemonade-network
+    ports:
+      - 8080:8080
+
+  worker:
+    container_name: worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    networks:
+      - lemonade-network
+    ports:
+      - 3001:3001
+    env_file: .env
+    restart: on-failure
+    depends_on:
+      - postgresql
+      - temporal
+  
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server
+    networks:
+      - lemonade-network
+    ports:
+      - 3000:3000
+    env_file: .env
+    depends_on:
+      - postgresql
+      - temporal
+      - worker
+
+networks:
+  lemonade-network:
+    driver: bridge
+    name: lemonade-network
