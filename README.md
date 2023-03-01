@@ -1,73 +1,95 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# Workflow Schedular Runtime
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A highly scalable service to schedule workflow jobs/tasks with timers with persistance. The system is build to be distributed to scale with resilience.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Technologies Used
+
+1. [Temporal](https://temporal.io/) - It is a scalable and reliable runtime for Reentrant Processes. It's battle-tested at scale and used in production by companies like uber, netflix, snap (snapchat) etc. More about temporal:
+
+   - [Docs](https://docs.temporal.io/temporal)
+   - [TL;DR Intro Video](https://www.youtube.com/watch?v=2HjnQlnA5eY)
+
+2. [PostgreSQL](https://www.postgresql.org/) - Used for persistance of workflows alongside temporal.
+3. [Nest](https://github.com/nestjs/nest) - NodeJS TypeScript Framework.
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The service is a monorepo divided into two systems:
 
-## Installation
+1. server: The service is responsible for serving requests to schedule webhook triggers into temporal
+2. worker: The service responsible for polling workflows/jobs/tasks from temporal and execute the webhook triggers
+
+System Design Architecture Diagram:
+
+![diagram](/system-design-architecture.png)
+
+## Prerequisites
+
+1. Make sure [Docker](https://www.docker.com/products/docker-desktop/) is installed on the system
+2. Copy the `.env` file from `.env.example`
 
 ```bash
-$ npm install
+$ cp .env.example .env
 ```
 
 ## Running the app
 
+In the main directory, run the following command:
+
 ```bash
-# development
-$ npm run start
+$ docker compose up -d
+```
 
-# watch mode
-$ npm run start:dev
+## Helper tools
 
-# production mode
-$ npm run start:prod
+1. Swagger Docs: For testing out REST endpoints, Hosted at `/api-docs` path, for [localhost](http://localhost:3000/api-docs)
+2. Temporal UI: For deep visibility into scheduled tasks/jobs, for [localhost](http://localhost:8080)
+
+## How it works
+
+### 1. POST /timers
+
+```mermaid
+  sequenceDiagram
+     client ->> server: HTTP request with webhook url and time to delay
+     server ->> temporal client SDK: Request to create workflow to trigger workflow with deadline
+     temporal client SDK ->> temporal: gRPC call to register and persist the workflow task
+     temporal ->> postgreSQL: persist the new workflow task
+     postgreSQL ->> temporal: success response
+     temporal worker SDK ->> temporal: poll temporal for new workflows to run
+     temporal worker SDK ->> worker: run the workflow and start the timer
+     worker ->> webhook trigger: trigger the post request on the provided url after deadline
+```
+
+### 2. GET /timers/:id
+
+```mermaid
+   sequenceDiagram
+   client ->> server / temporal client: HTTP request to fetch the time left for task by id
+   server / temporal client ->> temporal: "getDeadline" Query to fetch the timer expiration
+   temporal ->> worker / temporal worker: query forwarded from client to workflow
+   worker / temporal worker ->> temporal: returns the deadline/timeout
+   temporal ->> server / temporal client: forwards the deadline/timeout from worker
+   server / temporal client ->> client: Returns the difference between current time and deadline, if positive then returns time diff in seconds otherwise returns 0
+
+
 ```
 
 ## Test
 
 ```bash
-# unit tests
-$ npm run test
+# install packages
+$ npm i
 
 # e2e tests
 $ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```
 
-## Support
+## Tasks
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+- [x] POST /timers api to schedule the webhook trigger with timer and return id of the scheduled task. Shoots post http call with empty body after timeout
+- [x] GET /timers/:id api to fetch time left in seconds until timer expires. Return 0 if already expired
+- [x] Persist timer and timers shouldn't reset if system is down(They are persisted inside postgreSQL via temporal)
+- [x] If all the workers are down, and when they are back, they pick up the tasks to be processed and if timers are expired already they shoot post request
+- [x] Docker compose file to run the whole system by single command
+- [x] API test cases (not all cases covered yet)
