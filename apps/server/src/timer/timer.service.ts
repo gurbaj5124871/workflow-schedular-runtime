@@ -51,7 +51,7 @@ export class TimerService {
     const deadline: number = await handle.query('getDeadline');
 
     if (deadline - now < 0) {
-      return -1;
+      return 0;
     }
 
     return Math.ceil((deadline - now) / 1000);
