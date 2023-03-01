@@ -20,11 +20,7 @@
     "start:worker:debug": "nest start worker --debug --watch",
     "start:worker:prod": "node dist/apps/worker/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/timer/test/jest-e2e.json"
+    "test:e2e": "jest --config ./apps/server/test/jest-e2e.json --silent=false --forceExit"
   },
   "dependencies": {
     "@nestjs/axios": "^2.0.0",
@@ -47,6 +43,8 @@
     "@nestjs/cli": "^8.0.0",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
+    "@temporalio/nyc-test-coverage": "^1.6.0",
+    "@temporalio/testing": "^1.6.0",
     "@types/express": "^4.17.13",
     "@types/jest": "27.0.2",
     "@types/node": "^16.0.0",

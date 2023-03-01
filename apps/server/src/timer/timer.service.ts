@@ -1,32 +1,18 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
-import { Connection, Client } from '@temporalio/client';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Client } from '@temporalio/client';
 import { v4 as uuid } from 'uuid';
 import { ConfigService } from '@nestjs/config';
 import { ConfigType } from '../config';
 
 @Injectable()
-export class TimerService implements OnModuleInit, OnModuleDestroy {
+export class TimerService {
   private readonly logger: Logger = new Logger(TimerService.name);
-  private temporalClient: Client;
 
   constructor(
-    @Inject('TEMPORAL_CLIENT_CONNECTION')
-    private readonly temporalClientConnection: Connection,
+    @Inject('TEMPORAL_CLIENT')
+    private readonly temporalClient: Client,
     private readonly configService: ConfigService<ConfigType>,
   ) {}
-
-  async onModuleInit() {
-    this.temporalClient = new Client({
-      connection: this.temporalClientConnection,
-    });
-    this.logger.log(`Temporal client connected`);
-  }
 
   getDeadlineInMsFromCurrentTime(timer: {
     hours: number;

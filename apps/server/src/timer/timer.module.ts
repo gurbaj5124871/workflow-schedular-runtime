@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { TemporalClientConnectionProvider } from '../temporal-client-connection.provider';
+import { TemporalClientProvider } from '../temporal-client.provider';
 import { TimerService } from './timer.service';
 import { TimerController } from './timer.controller';
 
 @Module({
-  providers: [TemporalClientConnectionProvider, TimerService],
+  providers: [TemporalClientProvider, TimerService],
   controllers: [TimerController],
 })
 export class TimerModule {}

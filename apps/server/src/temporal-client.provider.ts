@@ -1,14 +1,14 @@
 import { FactoryProvider } from '@nestjs/common';
-import { Connection, ConnectionOptions } from '@temporalio/client';
+import { Connection, ConnectionOptions, Client } from '@temporalio/client';
 import { ConfigService } from '@nestjs/config';
 import { ConfigType } from './config';
 
-export const TemporalClientConnectionProvider: FactoryProvider = {
-  provide: 'TEMPORAL_CLIENT_CONNECTION',
+export const TemporalClientProvider: FactoryProvider = {
+  provide: 'TEMPORAL_CLIENT',
   inject: [ConfigService],
   useFactory: async (
     configService: ConfigService<ConfigType>,
-  ): Promise<Connection> => {
+  ): Promise<Client> => {
     const temporalClientConfig: ConnectionOptions = {
       address: configService.get('temporalHostUrl', { infer: true }),
     };
@@ -16,6 +16,9 @@ export const TemporalClientConnectionProvider: FactoryProvider = {
       temporalClientConfig.tls = true;
     }
 
-    return Connection.connect(temporalClientConfig);
+    const connection = await Connection.connect(temporalClientConfig);
+    return new Client({
+      connection,
+    });
   },
 };
