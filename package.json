@@ -40,7 +40,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^8.0.0",
+    "@nestjs/cli": "^10.1.18",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
     "@temporalio/nyc-test-coverage": "^1.6.0",
