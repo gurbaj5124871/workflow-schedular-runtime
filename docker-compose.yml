@@ -1,4 +1,4 @@
-version: "3.5"
+version: '3.5'
 services:
   postgresql:
     container_name: postgresql
@@ -12,13 +12,18 @@ services:
       - 5432:5432
     volumes:
       - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgresql']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   temporal:
     container_name: temporal
     depends_on:
       - postgresql
     environment:
-      - DB=postgresql
+      - DB=postgres12
       - DB_PORT=5432
       - POSTGRES_USER=postgresql
       - POSTGRES_PWD=postgresql
@@ -34,15 +39,7 @@ services:
     labels:
       kompose.volume.type: configMap
     healthcheck:
-      test:
-        [
-          "CMD",
-          "tctl",
-          "--address",
-          "temporal:7233",
-          "workflow",
-          "list"
-        ]
+      test: ['CMD', 'tctl', '--address', 'temporal:7233', 'workflow', 'list']
       interval: 10s
       timeout: 1m
       retries: 10
@@ -73,9 +70,11 @@ services:
     env_file: .env
     restart: on-failure
     depends_on:
-      - postgresql
-      - temporal
-  
+      postgresql:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+
   server:
     container_name: server
     build:
@@ -88,9 +87,10 @@ services:
       - 3000:3000
     env_file: .env
     depends_on:
-      - postgresql
-      - temporal
-      - worker
+      postgresql:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
 
 networks:
   lemonade-network:

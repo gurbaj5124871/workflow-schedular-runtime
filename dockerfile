@@ -1,4 +1,4 @@
-FROM node:16.13-alpine as base
+FROM node:20.19.0-alpine as base
 
 ENV NODE_ENV build
 
@@ -30,7 +30,7 @@ RUN npm run build:worker
 
 #######################################
 
-FROM node:16.13-alpine as server
+FROM node:20.19.0-alpine as server
 
 ARG NODE_ENV=production
 ENV NODE_ENV $NODE_ENV
@@ -49,7 +49,7 @@ CMD ["node", "dist/apps/server/main.js"]
 
 #######################################
 
-FROM node:16.13-slim as worker
+FROM node:20.19.0-slim as worker
 
 ARG NODE_ENV=production
 ENV NODE_ENV $NODE_ENV

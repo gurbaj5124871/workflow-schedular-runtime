@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ConfigType } from './config';
 
 export const TemporalWorkerConnectionProvider: FactoryProvider = {
-  provide: 'TEMPORAL_CLIENT_CONNECTION',
+  provide: 'TEMPORAL_WORKER_CONNECTION',
   inject: [ConfigService],
   useFactory: async (
     configService: ConfigService<ConfigType>,
