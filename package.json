@@ -27,7 +27,7 @@
     "@nestjs/common": "^11.0.16",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.11",
-    "@nestjs/platform-express": "^11.0.16",
+    "@nestjs/platform-express": "^11.1.11",
     "@nestjs/swagger": "^11.1.2",
     "@temporalio/worker": "^1.6.0",
     "joiful": "^3.0.2",
@@ -40,7 +40,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.4.9",
+    "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^11.0.16",
     "@temporalio/nyc-test-coverage": "^1.6.0",
